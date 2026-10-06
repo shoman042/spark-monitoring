@@ -1,75 +1,122 @@
-Spark Job Monitoring with Prometheus and Grafana
+Spark Job Monitoring with Prometheus & Grafana
 
-A simple end-to-end Apache Spark monitoring project that demonstrates how to process customer and order data with PySpark and monitor Spark execution and performance using Prometheus and Grafana.
+An end-to-end observability project for an Apache Spark application, combining PySpark data processing with Prometheus metrics collection and Grafana visualization.
 
-📌 Project Overview
+Overview
 
-The project consists of a PySpark application that processes two CSV datasets:
+This project demonstrates how to monitor a Spark application while it is processing real datasets.
 
-customers.csv
+The application reads customer and order data, applies filtering and transformation logic, joins the datasets, calculates revenue, and produces total revenue by country.
 
-orders.csv
+At the same time, Spark exposes runtime metrics through its Prometheus-compatible metrics endpoints. Prometheus collects these metrics, while Grafana provides a dashboard for monitoring job execution and application performance.
 
-The Spark application filters and joins the data, calculates revenue by country, and displays the results.
+Architecture
 
-At the same time, Spark exposes monitoring metrics that are collected by Prometheus and visualized through a Grafana dashboard.
+                         ┌──────────────────────┐
+                         │     customers.csv    │
+                         └──────────┬───────────┘
+                                    │
+                                    │
+                         ┌──────────▼───────────┐
+                         │                      │
+                         │   PySpark Application│
+                         │      spark_job.py    │
+                         │                      │
+                         └──────────┬───────────┘
+                                    │
+                         Spark Metrics / HTTP :4040
+                                    │
+                         ┌──────────▼───────────┐
+                         │      Prometheus      │
+                         │       :9090          │
+                         └──────────┬───────────┘
+                                    │
+                               PromQL queries
+                                    │
+                         ┌──────────▼───────────┐
+                         │       Grafana        │
+                         │        :3000         │
+                         └──────────────────────┘
 
-The monitoring pipeline is:
+                         ┌──────────────────────┐
+                         │      orders.csv      │
+                         └──────────────────────┘
 
-PySpark Application
-        │
-        │ Spark Metrics
-        ▼
-    Prometheus
-        │
-        │ PromQL
-        ▼
-      Grafana
+Prometheus and Grafana run as Docker containers, while the Spark application runs locally on the Windows host. The containers communicate with the host Spark application through host.docker.internal.
 
-🎯 Objectives
+Project Objectives
 
-Develop a PySpark application for processing customer and order data.
+The project was designed to demonstrate the complete monitoring workflow for a Spark application:
+
+Build a PySpark data-processing application.
 
 Execute the application using spark-submit.
 
 Configure Spark to expose Prometheus-compatible metrics.
 
-Collect Spark metrics using Prometheus.
+Configure Prometheus to scrape Spark metrics.
 
 Connect Prometheus to Grafana.
 
-Build a Grafana dashboard with six monitoring panels.
+Build a Grafana dashboard for Spark execution and performance monitoring.
 
-🛠️ Technologies
+Verify the collected metrics and resulting dashboard values.
 
-Apache Spark 4.2.0
+Technology Stack
 
-PySpark 4.2.0
+Component
 
-Python 3.13.12
+Version / Technology
 
-OpenJDK 17.0.20.1
+Apache Spark
+
+4.2.0
+
+PySpark
+
+4.2.0
+
+Python
+
+3.13.12
+
+Java
+
+OpenJDK 17.0.20.1 (Temurin)
 
 Prometheus
 
+Docker image
+
 Grafana
 
-Docker 29.2.1
+Docker image
+
+Docker
+
+29.2.1
 
 Docker Compose
 
+Used for monitoring services
+
+Operating System
+
 Windows
+
+Development Environment
 
 Visual Studio Code
 
-📁 Project Structure
+Repository Structure
 
 spark-monitoring/
 │
 ├── spark_job.py
-├── docker-compose.yml
-├── prometheus.yml
 ├── metrics.properties
+├── prometheus.yml
+├── docker-compose.yml
+├── .gitignore
 │
 ├── data/
 │   ├── customers.csv
@@ -82,126 +129,231 @@ spark-monitoring/
 │   ├── Spark_Monitoring_Project_Documentation.pdf
 │   └── Spark_Monitoring_Project_Documentation.docx
 │
-├── screenshots/
-│   ├── WhatsApp Image 2026-10-06 at 4.03.11 PM.jpeg
-│   ├── WhatsApp Image 2026-10-06 at 4.03.41 PM.jpeg
-│   ├── WhatsApp Image 2026-10-06 at 4.04.03 PM.jpeg
-│   └── WhatsApp Image 2026-10-06 at 4.06.51 PM.jpeg
-│
-└── .gitignore
+└── screenshots/
+    ├── WhatsApp Image 2026-10-06 at 4.03.11 PM.jpeg
+    ├── WhatsApp Image 2026-10-06 at 4.03.41 PM.jpeg
+    ├── WhatsApp Image 2026-10-06 at 4.04.03 PM.jpeg
+    └── WhatsApp Image 2026-10-06 at 4.06.51 PM.jpeg
 
-⚙️ Spark Data Processing
+Key Components
 
-The PySpark application performs the following steps:
+spark_job.py
+PySpark application responsible for reading, filtering, joining, transforming, and aggregating the datasets.
 
-Reads the customer and order CSV files.
+metrics.properties
+Configures Spark's PrometheusServlet metrics sink and the HTTP paths used to expose Spark metrics.
 
-Filters customers whose age is greater than or equal to 18.
+prometheus.yml
+Defines Prometheus scrape configuration for the Spark driver and executor endpoints.
 
-Filters orders with status Completed.
+docker-compose.yml
+Runs Prometheus and Grafana as Docker services.
 
-Trims whitespace from the order status before filtering.
+monitoring/
+Contains the exported Grafana dashboard configuration.
 
-Keeps orders with quantity greater than or equal to 2.
+docs/
+Contains the detailed project documentation in PDF and DOCX formats.
 
-Joins orders with customers using customer_id.
+Data Processing
 
-Calculates order revenue:
+The Spark application processes two CSV datasets.
+
+Customers
+
+The customer dataset contains:
+
+customer_id
+
+name
+
+country
+
+age
+
+Orders
+
+The orders dataset contains:
+
+order_id
+
+customer_id
+
+product
+
+category
+
+quantity
+
+price
+
+status
+
+Transformation Flow
+
+The application performs the following processing sequence:
+
+Customers + Orders
+        │
+        ▼
+Filter customers: age >= 18
+        │
+        ▼
+Filter orders: status = Completed
+        │
+        ▼
+Filter orders: quantity >= 2
+        │
+        ▼
+Join on customer_id
+        │
+        ▼
+Calculate revenue
+        │
+        ▼
+Group by country
+        │
+        ▼
+SUM(total revenue)
+        │
+        ▼
+Sort descending
+
+Revenue is calculated as:
 
 revenue = quantity × price
 
-Groups the results by country.
+The application then remains active for 300 seconds, keeping the Spark UI and metrics endpoints available for monitoring.
 
-Calculates total revenue for each country.
+Running the Project
 
-Sorts the results from highest to lowest revenue.
+1. Start the Monitoring Stack
 
-The application then remains active for 300 seconds so that Spark metrics remain available for Prometheus and Grafana.
+From the project root:
 
-🚀 Running the Spark Application
+docker compose up -d
+
+This starts:
+
+Prometheus on port 9090
+
+Grafana on port 3000
+
+2. Start the Spark Application
+
+Run:
 
 spark-submit --conf spark.ui.prometheus.enabled=true --conf spark.metrics.conf=metrics.properties --conf spark.metrics.namespace=spark spark_job.py
 
-Spark exposes the metrics through its Spark UI on port 4040.
+The Spark application exposes its metrics through the Spark UI on port 4040.
 
-📊 Prometheus Configuration
+3. Access the Services
 
-Prometheus scrapes the Spark metrics every 5 seconds.
+Service
 
-The configured Spark endpoints include:
+URL
+
+Spark UI
+
+http://localhost:4040
+
+Prometheus
+
+http://localhost:9090
+
+Grafana
+
+http://localhost:3000
+
+Monitoring Configuration
+
+Spark Metrics
+
+The project enables the Prometheus metrics endpoint through Spark configuration.
+
+The configured metrics paths include:
+
+/metrics/driver/prometheus
+/metrics/executors/prometheus
+/metrics/master/prometheus
+/metrics/applications/prometheus
+
+These endpoints are served by the Spark UI while the application is running.
+
+Prometheus
+
+Prometheus is configured with a 5-second global scrape interval and collects metrics from:
+
+host.docker.internal:4040
+
+The configured scrape paths include:
 
 /metrics/driver/prometheus/
 /metrics/executors/prometheus/
 
-Prometheus runs on:
-
-http://localhost:9090
-
-The Spark application runs on the host machine while Prometheus runs inside Docker.
-
-Docker containers access the host through:
-
-host.docker.internal
-
-📈 Grafana Dashboard
-
-The project includes a Grafana dashboard named:
-
-Spark Job Monitoring Dashboard
-
-The dashboard contains six panels:
-
-Panel
-
-PromQL Query
-
-Running Jobs
-
-metrics_spark_driver_DAGScheduler_job_activeJobs_Number
-
-Completed Jobs
-
-metrics_spark_driver_DAGScheduler_job_allJobs_Number - metrics_spark_driver_DAGScheduler_job_activeJobs_Number
-
-Failed Jobs
-
-metrics_spark_driver_DAGScheduler_stage_failedStages_Number
-
-CPU Usage
-
-rate(metrics_executor_totalDuration_seconds_total[1m])
-
-Executors
-
-count(metrics_executor_totalCores)
-
-JVM Heap Memory
-
-metrics_executor_JVMHeapMemory_bytes
-
-The dashboard JSON is available in:
-
-monitoring/
-
-🐳 Running Prometheus and Grafana
-
-Start the monitoring stack with:
-
-docker compose up -d
-
-Prometheus:
-
-http://localhost:9090
-
-Grafana:
-
-http://localhost:3000
+Grafana
 
 Prometheus is configured as the Grafana data source using:
 
 http://prometheus:9090
 
-📊 Results
+The Grafana dashboard is provided as an exported JSON file under:
+
+monitoring/
+
+Grafana Dashboard
+
+Spark Job Monitoring Dashboard
+
+The dashboard contains six panels covering job execution, failures, executor information, CPU-related activity, and JVM memory.
+
+Panel
+
+Purpose
+
+PromQL
+
+Running Jobs
+
+Current active Spark jobs
+
+metrics_spark_driver_DAGScheduler_job_activeJobs_Number
+
+Completed Jobs
+
+Completed jobs derived from total and active jobs
+
+metrics_spark_driver_DAGScheduler_job_allJobs_Number - metrics_spark_driver_DAGScheduler_job_activeJobs_Number
+
+Failed Jobs
+
+Failed stages used as the available failure indicator
+
+metrics_spark_driver_DAGScheduler_stage_failedStages_Number
+
+CPU Usage
+
+Estimated CPU-related activity from executor task duration
+
+rate(metrics_executor_totalDuration_seconds_total[1m])
+
+Executors
+
+Number of reported Spark executors
+
+count(metrics_executor_totalCores)
+
+JVM Heap Memory
+
+Executor JVM heap memory usage
+
+metrics_executor_JVMHeapMemory_bytes
+
+The dashboard uses the metrics exposed by the configured Spark endpoints. "Completed Jobs" is derived because a dedicated completed-jobs metric was not available, while "Failed Jobs" uses failed stages as the closest available failure indicator.
+
+Verified Results
+
+Data Processing Output
 
 The Spark application produced the following total revenue by country:
 
@@ -211,47 +363,49 @@ Total Revenue
 
 Egypt
 
-122485
+122,485
 
 France
 
-52786
+52,786
 
 USA
 
-38068
+38,068
 
 Canada
 
-30753
+30,753
 
 Germany
 
-20084
+20,084
 
 UAE
 
-18115
+18,115
 
 India
 
-11559
+11,559
 
 UK
 
-11164
+11,164
 
 Saudi Arabia
 
-9545
+9,545
 
-Prometheus successfully reported both Spark scrape targets as UP.
+Monitoring Verification
 
-During execution, the Grafana dashboard displayed:
+Prometheus successfully reported both configured Spark scrape targets as UP.
+
+The dashboard displayed the following values during execution:
 
 Metric
 
-Value
+Observed Value
 
 Running Jobs
 
@@ -277,60 +431,76 @@ JVM Heap Memory
 
 164 MiB
 
-Because the application runs in local mode, the single reported executor is the driver process itself.
+Because Spark is running in local mode, the single reported executor is the driver process itself.
 
-🔧 Challenges and Solutions
+Implementation Notes
 
-1. spark-submit was not recognized
+Spark Submit
 
-The spark-submit.cmd executable was located inside the installed PySpark package.
+On Windows, the spark-submit.cmd executable was located inside the installed PySpark package. The required Scripts/bin directory was added to the terminal PATH so the application could be launched with spark-submit.cmd.
 
-The required Scripts/bin directory was added to the terminal PATH and spark-submit.cmd was used.
+Prometheus 404 Issue
 
-2. Prometheus returned HTTP 404
+The Spark driver target initially returned HTTP 404 Not Found because the configured scrape path did not match the driver metrics endpoint.
 
-The initial Spark driver metrics path was incorrect.
-
-The configuration was changed to:
+The configuration was corrected to:
 
 /metrics/driver/prometheus/
 
-After the correction, the Spark driver target became UP.
+After the correction, the Spark driver target reported UP.
 
-3. No direct completed-jobs metric
+Multiple Application Series
 
-Spark did not expose a dedicated completed-jobs metric.
+Running the Spark application multiple times produced different application_id values. This caused CPU and JVM heap queries to expose more than one series.
 
-Therefore, completed jobs were calculated as:
+The documentation identified aggregation with sum() as a way to obtain a single aggregated value when required.
 
-Total Jobs - Active Jobs
+Limitations
 
-4. No direct failed-jobs metric
+This project intentionally runs Spark in local mode. As a result:
 
-The available Spark metrics did not provide a ready-made failed-jobs metric.
+There are no separate worker executors.
 
-The dashboard therefore uses the failed stages metric as the closest available indicator.
+The executor count remains one.
 
-⚠️ Limitations
-
-The Spark application runs in local mode.
-
-The executor count is therefore always one.
-
-Spark metrics are available only while the Spark application and Spark UI are running.
+Spark metrics are available only while the application and Spark UI are running.
 
 The application pauses for 300 seconds to keep the metrics endpoints available.
 
-The Failed Jobs panel represents failed stages rather than failed jobs.
+The Failed Jobs panel represents failed stages rather than a direct failed-jobs metric.
 
-CPU Usage is an estimate based on executor task execution time rather than a direct CPU measurement.
+The CPU Usage panel is an estimate based on executor task execution time rather than a direct operating-system CPU measurement.
 
-📚 Documentation
+Project Documentation
 
-Detailed project documentation is available in the docs/ directory in both PDF and DOCX formats.
+For the complete implementation details, configuration explanations, verification results, challenges, and limitations, see:
 
-👨‍💻 Project
+docs/Spark_Monitoring_Project_Documentation.pdf
 
-Spark Job Monitoring using Prometheus and Grafana
+docs/Spark_Monitoring_Project_Documentation.docx
 
-Built as part of Samsung Innovation Campus.
+The repository also includes the exported Grafana dashboard and project screenshots.
+
+Project Context
+
+Samsung Innovation Campus
+
+This project demonstrates the integration of:
+
+Apache Spark
+      +
+Prometheus
+      +
+Grafana
+      +
+Docker
+
+to create a practical monitoring workflow around a Spark data-processing application.
+
+Author
+
+Yusuf Ahmed Shoman
+
+Computer Engineering Student | Data Engineering Track
+
+GitHub: @shoman042
